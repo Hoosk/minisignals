@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "build": "npm run build --workspaces --if-present",
-    "test": "npm test --workspaces --if-present"
+    "test": "npm test --workspaces --if-present",
+    "prepublishOnly": "npm run test && npm run build"
+
   },
   "workspaces": [
     "packages/*"
