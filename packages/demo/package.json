@@ -1,0 +1,17 @@
+{
+  "name": "@hoosk/minisignals-demo",
+  "version": "1.0.0",
+  "description": "Demo for minisignals",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@hoosk/minisignals": "*"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.3",
+    "typescript": "^5.9.3"
+  },
+  "type": "module"
+}

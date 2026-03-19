@@ -1,0 +1,39 @@
+name: Publish to NPM
+
+on:
+  release:
+    types: [created] # Se dispara al crear una release en GitHub
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+          scope: '@hoosk'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Tests
+        run: npx vitest run
+
+      - name: Build packages
+        run: npm run build
+
+      - name: Publish Core
+        run: npm publish --access public
+        working-directory: ./packages/core
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish React Adapter
+        run: npm publish --access public
+        working-directory: ./packages/react
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -1,5 +1,5 @@
-import { signal, Signal } from './signal.ts';
-import { effect } from './effect.ts';
+import { signal, Signal } from './signal';
+import { effect } from './effect';
 
 export interface Computed<T> {
   readonly value: T;
