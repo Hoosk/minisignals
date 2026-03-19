@@ -2,13 +2,26 @@ import { describe, it, expect, vi } from 'vitest';
 import { signal, computed } from '../src/index.ts';
 
 describe('@hoosk/minisignals - computed()', () => {
+  it('should be LAZY: must not calculate until .value is read', () => {
+    const count = signal(2);
+    const spy = vi.fn(() => count.value * 2);
+    
+    const double = computed(spy);
+    
+    expect(spy).toHaveBeenCalledTimes(0);
+
+    expect(double.value).toBe(4);
+    expect(spy).toHaveBeenCalledTimes(1);
+  });
+
   it('should derive values and cache them', () => {
     const count = signal(2);
     const spy = vi.fn(() => count.value * 2);
     const double = computed(spy);
 
-    expect(spy).toHaveBeenCalledTimes(1);
     expect(double.value).toBe(4);
+    expect(spy).toHaveBeenCalledTimes(1); 
+
     expect(double.value).toBe(4);
     expect(spy).toHaveBeenCalledTimes(1);
   });
@@ -36,8 +49,25 @@ describe('@hoosk/minisignals - computed()', () => {
 
     count.value = 1;
     expect(spy).toHaveBeenCalledTimes(1);
-
+    
     expect(tens.value).toBe(0); 
+  });
+
+  it('NEGATIVE CASE: should handle reading a disposed computed that was never initialized', () => {
+    const count = signal(10);
+    const spy = vi.fn(() => count.value * 5);
+    const disposedEarly = computed(spy);
+
+    disposedEarly.dispose();
+
+    expect(disposedEarly.value).toBe(50);
+    expect(spy).toHaveBeenCalledTimes(1);
+
+    count.value = 20;
+    expect(spy).toHaveBeenCalledTimes(1);
+    
+    expect(disposedEarly.value).toBe(100);
+    expect(spy).toHaveBeenCalledTimes(2);
   });
 
   it('should allow computed signals to depend on other computed signals (Chaining)', () => {
