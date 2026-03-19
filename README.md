@@ -4,7 +4,7 @@
 [![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-blue.svg)](https://www.typescriptlang.org/)
 [![React 18 Ready](https://img.shields.io/badge/React-18%2B-61dafb.svg)](https://react.dev/)
 
-A blazing-fast, minimalist, framework-agnostic reactive signal library, paired with a React 18 adapter. Built with a strict **KISS (Keep It Simple, Stupid)** philosophy and **Zero Dependencies**.
+A blazing-fast, minimalist, framework-agnostic reactive signal library, paired with a React 18 adapter.
 
 `minisignals` was designed as a deep-dive into modern reactive primitives (similar to Preact Signals or Vue Reactivity), implementing advanced concepts like dynamic dependency tracking and lazy evaluation in just a few lines of code.
 
