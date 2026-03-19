@@ -1,6 +1,6 @@
 {
   "name": "@hoosk/minisignals",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Minimal agnostic signals library",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
