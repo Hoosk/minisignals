@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { signal, effect } from '../src/index.ts';
+import { signal, effect, untracked } from '../src/index.ts';
 
 describe('@hoosk/minisignals - effect()', () => {
   it('should run immediately upon creation', () => {
@@ -98,5 +98,58 @@ describe('@hoosk/minisignals - effect()', () => {
     childSig.value = 'child-update';
     expect(parentSpy).toHaveBeenCalledTimes(1); // Parent should not run
     expect(childSpy).toHaveBeenCalledTimes(2); // Child should run
+  });
+
+  it('NEGATIVE CASE: should not cause infinite loop when an effect writes to a signal it reads', () => {
+    const count = signal(0);
+
+    expect(() => {
+      effect(() => {
+        if (count.value < 10) {
+          count.value += 1; // write inside a read — would recurse without isRunning guard
+        }
+      });
+    }).not.toThrow();
+
+    // Effect ran once (initial), wrote count → but re-entry was blocked
+    expect(count.value).toBe(1);
+  });
+
+  describe('untracked()', () => {
+    it('should read a signal without creating a subscription', () => {
+      const count = signal(0);
+      const spy = vi.fn();
+
+      effect(() => {
+        spy(untracked(() => count.value));
+      });
+
+      expect(spy).toHaveBeenCalledTimes(1);
+
+      // Mutating count must NOT re-run the effect (no subscription was created)
+      count.value = 99;
+      expect(spy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should allow mixing tracked and untracked reads', () => {
+      const a = signal(1);
+      const b = signal(10);
+      const spy = vi.fn();
+
+      effect(() => {
+        // 'a' is tracked, 'b' is not
+        spy(a.value + untracked(() => b.value));
+      });
+
+      expect(spy).toHaveBeenCalledTimes(1);
+      expect(spy).toHaveBeenLastCalledWith(11);
+
+      b.value = 20; // untracked — no re-run
+      expect(spy).toHaveBeenCalledTimes(1);
+
+      a.value = 2; // tracked — re-runs, picks up latest b
+      expect(spy).toHaveBeenCalledTimes(2);
+      expect(spy).toHaveBeenLastCalledWith(22);
+    });
   });
 });

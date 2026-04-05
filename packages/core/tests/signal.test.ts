@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { signal } from '../src/index.ts';
+import { describe, it, expect, vi } from 'vitest';
+import { signal, effect, batch } from '../src/index.ts';
 
 describe('@hoosk/minisignals - signal()', () => {
   it('should hold and update values', () => {
@@ -29,5 +29,58 @@ describe('@hoosk/minisignals - signal()', () => {
     
     obj.value = ref;
     expect(obj.value).toBe(ref);
+  });
+});
+
+describe('@hoosk/minisignals - batch()', () => {
+  it('should defer subscriber notifications until the batch completes', () => {
+    const name = signal('A');
+    const surname = signal('B');
+    const spy = vi.fn();
+
+    effect(() => {
+      spy(`${name.value} ${surname.value}`);
+    });
+
+    expect(spy).toHaveBeenCalledTimes(1); // initial run
+
+    batch(() => {
+      name.value = 'C';
+      surname.value = 'D';
+    });
+
+    // Only one re-run after batch, NOT two
+    expect(spy).toHaveBeenCalledTimes(2);
+    expect(spy).toHaveBeenLastCalledWith('C D');
+  });
+
+  it('should support nested batches — notifications fire only when outermost batch ends', () => {
+    const a = signal(0);
+    const b = signal(0);
+    const spy = vi.fn();
+
+    effect(() => {
+      spy(a.value + b.value);
+    });
+
+    expect(spy).toHaveBeenCalledTimes(1);
+
+    batch(() => {
+      batch(() => {
+        a.value = 1;
+        b.value = 1;
+      });
+      // Still inside outer batch — should not have fired yet
+      expect(spy).toHaveBeenCalledTimes(1);
+      a.value = 2;
+    });
+
+    expect(spy).toHaveBeenCalledTimes(2);
+    expect(spy).toHaveBeenLastCalledWith(3); // a=2, b=1
+  });
+
+  it('should return the value from the batched function', () => {
+    const result = batch(() => 42);
+    expect(result).toBe(42);
   });
 });

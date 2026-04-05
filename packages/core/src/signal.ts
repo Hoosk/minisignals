@@ -1,6 +1,10 @@
-import { activeEffect, SubscriberSet } from './effect';
+import { getActiveEffect, scheduleSubs, SubscriberSet } from './effect';
 
-export interface Signal<T> {
+export interface ReadonlySignal<T> {
+  readonly value: T;
+}
+
+export interface Signal<T> extends ReadonlySignal<T> {
   value: T;
 }
 
@@ -15,16 +19,17 @@ export function signal<T>(initialValue: T): Signal<T> {
 
   return {
     get value() {
-      if (activeEffect) {
-        subscribers.add(activeEffect.run);
-        activeEffect.deps.add(subscribers);
+      const active = getActiveEffect();
+      if (active) {
+        subscribers.add(active.run);
+        active.deps.add(subscribers);
       }
       return _value;
     },
     set value(newValue: T) {
       if (_value !== newValue) {
         _value = newValue;
-        [...subscribers].forEach(sub => sub());
+        scheduleSubs(subscribers);
       }
     }
   };
