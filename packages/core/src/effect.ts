@@ -4,6 +4,7 @@ interface ActiveEffect {
   run: () => void;
   deps: Set<SubscriberSet>;
   isRunning: boolean;
+  needsRerun: boolean;
 }
 
 let _activeEffect: ActiveEffect | null = null;
@@ -64,23 +65,39 @@ export function untracked<T>(fn: () => T): T {
  * @param fn The function to execute.
  * @returns An unsubscribe function.
  */
+const MAX_EFFECT_ITERATIONS = 100;
+
 export function effect(fn: () => void): () => void {
   const effectObj: ActiveEffect = {
     run() {
-      if (effectObj.isRunning) return;
-      cleanup(effectObj);
-      const previousEffect = _activeEffect;
-      _activeEffect = effectObj;
+      if (effectObj.isRunning) {
+        effectObj.needsRerun = true;
+        return;
+      }
       effectObj.isRunning = true;
+      let iterations = 0;
       try {
-        fn();
+        do {
+          if (++iterations > MAX_EFFECT_ITERATIONS) {
+            throw new Error('Circular dependency detected: effect exceeded maximum re-run limit');
+          }
+          effectObj.needsRerun = false;
+          cleanup(effectObj);
+          const previousEffect = _activeEffect;
+          _activeEffect = effectObj;
+          try {
+            fn();
+          } finally {
+            _activeEffect = previousEffect;
+          }
+        } while (effectObj.needsRerun);
       } finally {
         effectObj.isRunning = false;
-        _activeEffect = previousEffect;
       }
     },
     deps: new Set<SubscriberSet>(),
     isRunning: false,
+    needsRerun: false,
   };
 
   function cleanup(eff: ActiveEffect) {
@@ -88,6 +105,7 @@ export function effect(fn: () => void): () => void {
       depSet.delete(eff.run);
     }
     eff.deps.clear();
+    _pendingNotifications.delete(eff.run);
   }
 
   effectObj.run();

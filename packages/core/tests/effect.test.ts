@@ -100,19 +100,29 @@ describe('@hoosk/minisignals - effect()', () => {
     expect(childSpy).toHaveBeenCalledTimes(2); // Child should run
   });
 
-  it('NEGATIVE CASE: should not cause infinite loop when an effect writes to a signal it reads', () => {
+  it('should converge when an effect writes to a signal it reads (with a termination condition)', () => {
     const count = signal(0);
 
     expect(() => {
       effect(() => {
         if (count.value < 10) {
-          count.value += 1; // write inside a read — would recurse without isRunning guard
+          count.value += 1; // re-entrant write — triggers needsRerun
         }
       });
     }).not.toThrow();
 
-    // Effect ran once (initial), wrote count → but re-entry was blocked
-    expect(count.value).toBe(1);
+    // Effect converges: 0→1→2→...→10, then the condition stops
+    expect(count.value).toBe(10);
+  });
+
+  it('NEGATIVE CASE: should throw on truly circular effects that never converge', () => {
+    const count = signal(0);
+
+    expect(() => {
+      effect(() => {
+        count.value += 1; // always writes — never converges
+      });
+    }).toThrow(/Circular dependency detected/);
   });
 
   describe('untracked()', () => {

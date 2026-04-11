@@ -83,4 +83,23 @@ describe('@hoosk/minisignals - batch()', () => {
     const result = batch(() => 42);
     expect(result).toBe(42);
   });
+
+  it('NEGATIVE CASE: should not run an effect that was unsubscribed during the same batch', () => {
+    const count = signal(0);
+    const spy = vi.fn();
+
+    const unsubscribe = effect(() => {
+      spy(count.value);
+    });
+
+    expect(spy).toHaveBeenCalledTimes(1); // initial run
+
+    batch(() => {
+      count.value = 1;   // enqueues eff.run into pending notifications
+      unsubscribe();      // cleanup — should also remove eff.run from pending
+    });
+
+    // The effect must NOT have re-run after the batch flush
+    expect(spy).toHaveBeenCalledTimes(1);
+  });
 });
