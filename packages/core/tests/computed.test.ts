@@ -60,14 +60,17 @@ describe('@hoosk/minisignals - computed()', () => {
 
     disposedEarly.dispose();
 
+    // First read after dispose: calls fn() once and caches the result
     expect(disposedEarly.value).toBe(50);
     expect(spy).toHaveBeenCalledTimes(1);
 
+    // Signal changes, but the computed is frozen — fn() is NOT called again
     count.value = 20;
     expect(spy).toHaveBeenCalledTimes(1);
-    
-    expect(disposedEarly.value).toBe(100);
-    expect(spy).toHaveBeenCalledTimes(2);
+
+    // Returns the frozen cached value, not 100
+    expect(disposedEarly.value).toBe(50);
+    expect(spy).toHaveBeenCalledTimes(1);
   });
 
   it('should allow computed signals to depend on other computed signals (Chaining)', () => {

@@ -31,4 +31,21 @@ function Counter() {
 }
 ```
 
+### `useSignalValue` accepts any `ReadonlySignal`
+
+`useSignalValue` accepts both `Signal<T>` and `Computed<T>` via the shared `ReadonlySignal<T>` interface, so you can pass either directly:
+
+```tsx
+import { signal, computed } from '@hoosk/minisignals';
+import { useSignalValue } from '@hoosk/minisignals-react';
+
+const price = signal(100);
+const doubled = computed(() => price.value * 2);
+
+function Price() {
+  const value = useSignalValue(doubled); // works with Computed too
+  return <p>{value}</p>;
+}
+```
+
 For full documentation, please refer to the [main repository README](../../README.md).

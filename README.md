@@ -16,7 +16,7 @@ This project is structured as a monorepo containing:
 
 | Package | Description |
 | :--- | :--- |
-| **`@hoosk/minisignals`** | The framework-agnostic core (`signal`, `effect`, `computed`). |
+| **`@hoosk/minisignals`** | The framework-agnostic core (`signal`, `effect`, `computed`, `batch`, `untracked`). |
 | **`@hoosk/minisignals-react`** | React integration hooks (`useSignal`, `useSignalValue`). |
 | **`@hoosk/minisignals-demo`** | Manual playground for behavior testing and validation. |
 
@@ -73,7 +73,7 @@ count.value = 2; // Does nothing
 ```
 
 ### `computed<T>(fn: () => T)`
-Creates a derived, read-only signal. 
+Creates a derived, read-only signal.
 
 ```typescript
 import { signal, computed } from '@hoosk/minisignals';
@@ -92,9 +92,56 @@ console.log(total.value); // 300
 **Advanced Features of `computed`:**
 - **Lazy Evaluation:** The internal effect is *not* initialized until `.value` is read for the very first time.
 - **Caching:** The value is cached and only recalculates when its specific dependencies mutate.
-- **Memory Safety:** Includes a `.dispose()` method to detach subscriptions and prevent memory leaks.
-  - *If already initialized:* it keeps the last cached value frozen.
-  - *If disposed before initialization:* each read runs `fn` directly without creating memory-retained subscriptions.
+- **Memory Safety:** Includes a `.dispose()` method to detach subscriptions and prevent memory leaks. Once disposed, the last computed value is frozen — `fn` will never be called again.
+
+### `batch<T>(fn: () => T): T`
+Groups multiple signal writes into a single notification pass. Subscribers are notified only once after the batch completes. Nested batches are supported — notifications fire when the outermost batch ends.
+
+```typescript
+import { signal, effect, batch } from '@hoosk/minisignals';
+
+const name = signal('John');
+const surname = signal('Doe');
+
+effect(() => console.log(`${name.value} ${surname.value}`));
+// Logs: "John Doe"
+
+batch(() => {
+  name.value = 'Jane';
+  surname.value = 'Smith';
+});
+// Logs once: "Jane Smith"  (not twice)
+```
+
+### `untracked<T>(fn: () => T): T`
+Reads signals inside an effect without creating subscriptions. Useful when you need a signal's current value as a snapshot without reacting to its future changes.
+
+```typescript
+import { signal, effect, untracked } from '@hoosk/minisignals';
+
+const trigger = signal(0);
+const config = signal({ debug: false });
+
+effect(() => {
+  const t = trigger.value; // tracked — re-runs when trigger changes
+  const cfg = untracked(() => config.value); // NOT tracked
+  console.log(t, cfg.debug);
+});
+
+config.value = { debug: true }; // does NOT re-run the effect
+trigger.value = 1;              // re-runs, picking up latest config
+```
+
+### Types: `ReadonlySignal<T>`
+Both `Signal<T>` and `Computed<T>` extend the shared `ReadonlySignal<T>` interface (`{ readonly value: T }`). Use it to write utilities or hooks that accept either without caring about writability.
+
+```typescript
+import type { ReadonlySignal } from '@hoosk/minisignals';
+
+function logValue<T>(sig: ReadonlySignal<T>) {
+  console.log(sig.value);
+}
+```
 
 ---
 
@@ -141,7 +188,6 @@ function ReactiveCounter() {
 ## Current Limitations
 
 By design, to maintain its ultra-minimalist footprint, this library intentionally omits:
-- **Batching & Schedulers:** Updates notify subscribers synchronously and immediately.
 - **Transactions:** No execution priorities or deferred state mutations.
 - **Deep Equality:** Object mutation relies on strict equality (`!==`); you must reassign object references to trigger updates.
 - **Nested Effects:** Care must be taken with nested effects to avoid accumulation without proper cleanup.
