@@ -1,4 +1,4 @@
-import { getActiveEffect, scheduleSubs, SubscriberSet } from './effect';
+import { getActiveEffect, scheduleSubs, SubscriberSet } from './effect.js';
 
 export interface ReadonlySignal<T> {
   readonly value: T;

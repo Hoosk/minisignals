@@ -1,5 +1,5 @@
-import { signal, Signal, ReadonlySignal } from './signal';
-import { effect } from './effect';
+import { signal, Signal, ReadonlySignal } from './signal.js';
+import { effect } from './effect.js';
 
 export interface Computed<T> extends ReadonlySignal<T> {
   /**

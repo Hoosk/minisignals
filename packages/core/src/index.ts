@@ -1,3 +1,3 @@
-export * from './signal';
-export * from './effect';
-export * from './computed';
+export * from './signal.js';
+export * from './effect.js';
+export * from './computed.js';
