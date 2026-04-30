@@ -27,13 +27,27 @@ jobs:
         run: npm run build
 
       - name: Publish Core
-        run: npm publish --access public
         working-directory: ./packages/core
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          PACKAGE=$(node -p "require('./package.json').name")
+          if npm view "${PACKAGE}@${VERSION}" version 2>/dev/null | grep -q "${VERSION}"; then
+            echo "${PACKAGE}@${VERSION} already published, skipping"
+          else
+            npm publish --access public
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish React Adapter
-        run: npm publish --access public
         working-directory: ./packages/react
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          PACKAGE=$(node -p "require('./package.json').name")
+          if npm view "${PACKAGE}@${VERSION}" version 2>/dev/null | grep -q "${VERSION}"; then
+            echo "${PACKAGE}@${VERSION} already published, skipping"
+          else
+            npm publish --access public
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
