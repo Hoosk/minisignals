@@ -1,3 +1,9 @@
+// ─── Subscriber flags ───────────────────────────────────────────────────────
+
+export const PENDING     = 1 << 0; // queued in _pendingNotifications
+export const RUNNING     = 1 << 1; // effect is currently executing
+export const NEEDS_RERUN = 1 << 2; // dependency changed while RUNNING
+
 // ─── Dependency graph types ───────────────────────────────────────────────────
 
 export interface DependencySource {
@@ -26,13 +32,11 @@ export interface Subscriber {
   depsHead: DependencyLink | null;
   depsTail: DependencyLink | null;
   trackId: number;
-  pending: boolean;
+  flags: number;
 }
 
-interface ActiveEffect extends Subscriber {
-  isRunning: boolean;
-  needsRerun: boolean;
-}
+// ActiveEffect uses the same shape — RUNNING and NEEDS_RERUN live in flags.
+type ActiveEffect = Subscriber;
 
 let _activeSubscriber: Subscriber | null = null;
 
@@ -163,7 +167,7 @@ export function cleanupSubscriber(subscriber: Subscriber): void {
     unlinkDependency(link);
     link = next;
   }
-  subscriber.pending = false;
+  subscriber.flags &= ~PENDING;
 }
 
 // ─── Batch scheduling ────────────────────────────────────────────────────────
@@ -173,8 +177,8 @@ const _pendingNotifications: Subscriber[] = [];
 
 function queueSubscriber(subscriber: Subscriber): void {
   if (_batchDepth > 0) {
-    if (!subscriber.pending) {
-      subscriber.pending = true;
+    if (!(subscriber.flags & PENDING)) {
+      subscriber.flags |= PENDING;
       _pendingNotifications.push(subscriber);
     }
   } else {
@@ -200,8 +204,8 @@ export function batch<T>(fn: () => T): T {
     if (_batchDepth === 0) {
       const pending = _pendingNotifications.splice(0);
       for (const sub of pending) {
-        if (!sub.pending) continue;
-        sub.pending = false;
+        if (!(sub.flags & PENDING)) continue;
+        sub.flags &= ~PENDING;
         sub.notify();
       }
     }
@@ -233,31 +237,29 @@ export function effect(fn: () => void): () => void {
   const effectObj = {} as ActiveEffect;
 
   effectObj.notify = () => {
-    if (effectObj.isRunning) {
-      effectObj.needsRerun = true;
+    if (effectObj.flags & RUNNING) {
+      effectObj.flags |= NEEDS_RERUN;
       return;
     }
-    effectObj.isRunning = true;
+    effectObj.flags |= RUNNING;
     let iterations = 0;
     try {
       do {
         if (++iterations > MAX_EFFECT_ITERATIONS) {
           throw new Error('Circular dependency detected: effect exceeded maximum re-run limit');
         }
-        effectObj.needsRerun = false;
+        effectObj.flags &= ~NEEDS_RERUN;
         trackSubscriber(effectObj, fn);
-      } while (effectObj.needsRerun);
+      } while (effectObj.flags & NEEDS_RERUN);
     } finally {
-      effectObj.isRunning = false;
+      effectObj.flags &= ~RUNNING;
     }
   };
 
   effectObj.depsHead = null;
   effectObj.depsTail = null;
   effectObj.trackId = 0;
-  effectObj.pending = false;
-  effectObj.isRunning = false;
-  effectObj.needsRerun = false;
+  effectObj.flags = 0;
 
   effectObj.notify();
 

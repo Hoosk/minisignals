@@ -2,6 +2,7 @@ import {
   cleanupSubscriber,
   createDependencySource,
   getActiveSubscriber,
+  PENDING,
   scheduleSource,
   Subscriber,
   trackDependency,
@@ -35,7 +36,7 @@ export function computed<T>(fn: () => T): Computed<T> {
     depsHead: null,
     depsTail: null,
     trackId: 0,
-    pending: false,
+    flags: 0,
   };
 
   let initialized = false;
@@ -44,11 +45,11 @@ export function computed<T>(fn: () => T): Computed<T> {
   let cachedValue!: T;
 
   function refreshValue(): void {
-    // Clear pending so a batch flush after an eager read inside the same batch
+    // Clear PENDING so a batch flush after an eager read inside the same batch
     // does not re-trigger notify() on an already-fresh computed.
     // We do NOT call cleanupSubscriber here: trackSubscriber increments trackId
     // and pruneStaleDependencies removes only stale links, reusing stable ones.
-    observer.pending = false;
+    observer.flags &= ~PENDING;
     cachedValue = trackSubscriber(observer, fn);
     initialized = true;
     dirty = false;
