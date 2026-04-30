@@ -6,7 +6,7 @@
 
 A blazing-fast, minimalist, framework-agnostic reactive signal library, paired with a React 18 adapter.
 
-`minisignals` was designed as a deep-dive into modern reactive primitives (similar to Preact Signals or Vue Reactivity), implementing advanced concepts like dynamic dependency tracking and lazy evaluation in just a few lines of code.
+`minisignals` was designed as a deep-dive into modern reactive primitives (similar to Preact Signals or Vue Reactivity), implementing advanced concepts like a linked-list dependency graph with O(1) lookup, lazy computed evaluation, and class-based signal instances for V8 monomorphization.
 
 ---
 
@@ -90,7 +90,7 @@ console.log(total.value); // 300
 ```
 
 **Advanced Features of `computed`:**
-- **Lazy Evaluation:** The internal effect is *not* initialized until `.value` is read for the very first time.
+- **Lazy Evaluation:** `fn` is only called when `.value` is read and the computed is dirty. Dependency changes mark it dirty but do not trigger recomputation.
 - **Caching:** The value is cached and only recalculates when its specific dependencies mutate.
 - **Memory Safety:** Includes a `.dispose()` method to detach subscriptions and prevent memory leaks. Once disposed, the last computed value is frozen — `fn` will never be called again.
 

@@ -16,3 +16,6 @@ yarn-error.log*
 *.sw?
 coverage/
 .vitest/
+
+# Local-only comparison benchmarks (require manually installing devDependencies)
+packages/core/bench/*.compare.mjs
