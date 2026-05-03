@@ -48,4 +48,4 @@ function Price() {
 }
 ```
 
-For full documentation, please refer to the [main repository README](../../README.md).
+For full documentation, please refer to the [main repository README](https://github.com/Hoosk/minisignals#readme).

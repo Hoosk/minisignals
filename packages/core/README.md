@@ -63,4 +63,4 @@ computed-batched-writes-then-read 706.54K ops/s   1.42 µs/op
 
 Run `npm run bench` to reproduce locally.
 
-For full documentation and advanced features, please refer to the [main repository README](../../README.md).
+For full documentation and advanced features, please refer to the [main repository README](https://github.com/Hoosk/minisignals#readme).
