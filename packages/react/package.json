@@ -1,6 +1,6 @@
 {
   "name": "@hoosk/minisignals-react",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "React adapter for @hoosk/minisignals",
   "type": "module",
   "main": "dist/index.cjs",
@@ -18,7 +18,7 @@
     "react": ">=18.0.0"
   },
   "dependencies": {
-    "@hoosk/minisignals": "^1.1.0"
+    "@hoosk/minisignals": "^1.1.1"
   },
   "devDependencies": {
     "@testing-library/react": "^14.2.1",
@@ -35,6 +35,7 @@
     "prepare": "npm run build",
     "test": "vitest run"
   },
+  "keywords": ["signals", "reactive", "reactivity", "state", "react", "hooks", "signal", "useSyncExternalStore"],
   "author": "Hoosk",
   "license": "MIT"
 }

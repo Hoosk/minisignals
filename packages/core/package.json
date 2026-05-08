@@ -1,6 +1,6 @@
 {
   "name": "@hoosk/minisignals",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Minimal agnostic signals library",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -22,7 +22,7 @@
     "test": "vitest run",
     "bench": "npm run build && node ./bench/core.bench.mjs"
   },
-  "keywords": [],
+  "keywords": ["signals", "reactive", "reactivity", "state", "computed", "effect", "signal", "observable", "framework-agnostic"],
   "author": "Hoosk",
   "license": "MIT"
 }
