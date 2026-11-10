@@ -4,21 +4,28 @@ on:
   release:
     types: [created] # Se dispara al crear una release en GitHub
 
+permissions:
+  contents: read
+  id-token: write # Requerido por npm Trusted Publishing (OIDC)
+
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
           scope: '@hoosk'
 
+      - name: Ensure npm supports trusted publishing
+        run: npm install -g npm@^11.5.1
+
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Run Tests
         run: npm test
@@ -36,8 +43,6 @@ jobs:
           else
             npm publish --access public
           fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish React Adapter
         working-directory: ./packages/react
@@ -49,8 +54,6 @@ jobs:
           else
             npm publish --access public
           fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish Vue Adapter
         working-directory: ./packages/vue
@@ -62,5 +65,3 @@ jobs:
           else
             npm publish --access public
           fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

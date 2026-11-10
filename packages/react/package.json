@@ -47,5 +47,10 @@
     "useSyncExternalStore"
   ],
   "author": "Hoosk",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hoosk/minisignals.git",
+    "directory": "packages/react"
+  }
 }
