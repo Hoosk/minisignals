@@ -52,5 +52,8 @@
     "type": "git",
     "url": "git+https://github.com/Hoosk/minisignals.git",
     "directory": "packages/react"
-  }
+  },
+  "files": [
+    "dist"
+  ]
 }

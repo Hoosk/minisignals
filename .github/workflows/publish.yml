@@ -55,10 +55,7 @@ jobs:
             npm publish --access public
           fi
 
-      # Vue quedó pendiente de aprobación en el flujo de staged publishing de npm.
-      # Cuando esté resuelto, activa la variable de repositorio PUBLISH_VUE=true.
       - name: Publish Vue Adapter
-        if: vars.PUBLISH_VUE == 'true'
         working-directory: ./packages/vue
         run: |
           VERSION=$(node -p "require('./package.json').version")
