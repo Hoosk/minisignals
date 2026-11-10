@@ -14,7 +14,6 @@ npm install @hoosk/minisignals @hoosk/minisignals-react
 
 ```tsx
 import { useSignal, useSignalValue } from '@hoosk/minisignals-react';
-
 function Counter() {
   // Create a local signal that survives re-renders
   const count = useSignal(0);
@@ -28,6 +27,40 @@ function Counter() {
       <button onClick={() => count.value++}>Increment</button>
     </div>
   );
+}
+```
+
+### `useComputed(fn, deps?)`
+
+Creates a `Computed<T>` that survives re-renders and is disposed automatically on unmount or when `deps` change:
+
+```tsx
+import { signal } from '@hoosk/minisignals';
+import { useComputed, useSignalValue } from '@hoosk/minisignals-react';
+
+const price = signal(100);
+
+function Total({ quantity }: { quantity: number }) {
+  const total = useComputed(() => price.value * quantity, [quantity]);
+  return <p>{useSignalValue(total)}</p>;
+}
+```
+
+### `useSignalEffect(fn, deps?)`
+
+Runs a core `effect` bound to the component lifecycle. The callback may return a cleanup function, which runs before each re-execution and on unmount:
+
+```tsx
+import { signal } from '@hoosk/minisignals';
+import { useSignalEffect } from '@hoosk/minisignals-react';
+
+const count = signal(0);
+
+function Title() {
+  useSignalEffect(() => {
+    document.title = `Count: ${count.value}`;
+  });
+  return null;
 }
 ```
 

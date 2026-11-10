@@ -1,0 +1,49 @@
+{
+  "name": "@hoosk/minisignals-vue",
+  "version": "1.0.0",
+  "description": "Vue 3 adapter for @hoosk/minisignals",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "peerDependencies": {
+    "vue": ">=3.0.0"
+  },
+  "dependencies": {
+    "@hoosk/minisignals": "^1.2.0"
+  },
+  "devDependencies": {
+    "@vue/test-utils": "^2.4.6",
+    "tsup": "^8.5.0",
+    "vue": "^3.4.0"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "dev": "tsup src/index.ts --format cjs,esm --watch --dts",
+    "prepare": "npm run build",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "signals",
+    "reactive",
+    "reactivity",
+    "state",
+    "vue",
+    "composables",
+    "signal"
+  ],
+  "author": "Hoosk",
+  "license": "MIT"
+}

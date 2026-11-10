@@ -6,7 +6,8 @@
     "baseUrl": ".",
     "paths": {
       "@hoosk/minisignals": ["packages/core/src/index.ts"],
-      "@hoosk/minisignals-react": ["packages/react/src/index.ts"]
+      "@hoosk/minisignals-react": ["packages/react/src/index.ts"],
+      "@hoosk/minisignals-vue": ["packages/vue/src/index.ts"]
     },
     "strict": true,
     "esModuleInterop": true,

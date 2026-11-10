@@ -2,6 +2,11 @@ import { _activeSubscriber, createDependencySource, DependencySource, scheduleSo
 
 export interface ReadonlySignal<T> {
   readonly value: T;
+  /**
+   * Reads the current value without subscribing the active effect/computed.
+   * Unlike `untracked(() => sig.value)` this avoids allocating a closure.
+   */
+  peek(): T;
 }
 
 export interface Signal<T> extends ReadonlySignal<T> {
@@ -30,8 +35,14 @@ class SignalImpl<T> implements Signal<T> {
   set value(newValue: T) {
     if (this._value !== newValue) {
       this._value = newValue;
-      scheduleSource(this._source);
+      // Writes with no subscribers are a pure property assignment: skip the
+      // scheduling machinery entirely.
+      if (this._source.subsHead !== null) scheduleSource(this._source);
     }
+  }
+
+  peek(): T {
+    return this._value;
   }
 }
 

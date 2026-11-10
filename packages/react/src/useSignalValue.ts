@@ -30,7 +30,7 @@ export function useSignalValue<T>(sig: ReadonlySignal<T>): T {
 
   return useSyncExternalStore(
     subscribe,
-    () => sig.value, // getSnapshot
-    () => sig.value  // getServerSnapshot (SSR support)
+    () => sig.peek(), // getSnapshot
+    () => sig.peek()  // getServerSnapshot (SSR support)
   );
 }

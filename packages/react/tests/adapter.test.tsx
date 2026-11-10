@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, act, cleanup } from '@testing-library/react';
-import { signal, computed, batch } from '@hoosk/minisignals';
-import { useSignalValue, useSignal } from '../src/index.ts';
+import { signal, computed, batch, type Computed } from '@hoosk/minisignals';
+import { useSignalValue, useSignal, useComputed, useSignalEffect } from '../src/index.ts';
 
 describe('@hoosk/minisignals-react adapter', () => {
   describe('useSignalValue()', () => {
@@ -212,6 +212,144 @@ describe('@hoosk/minisignals-react adapter', () => {
       // Passing a different initial value on re-render must have no effect
       rerender(<TestComponent init={999} />);
       expect(screen.getByTestId('v').textContent).toBe('1');
+    });
+  });
+
+  describe('useComputed()', () => {
+    it('should derive values and stay in sync with source signals', () => {
+      const price = signal(100);
+
+      const TestComponent = () => {
+        const doubled = useComputed(() => price.value * 2);
+        const value = useSignalValue(doubled);
+        return <div data-testid="computed">{value}</div>;
+      };
+
+      render(<TestComponent />);
+      expect(screen.getByTestId('computed').textContent).toBe('200');
+
+      act(() => { price.value = 150; });
+      expect(screen.getByTestId('computed').textContent).toBe('300');
+    });
+
+    it('should dispose the computed instance on unmount', () => {
+      const source = signal(1);
+      let captured: Computed<number> | null = null;
+
+      const TestComponent = () => {
+        const instance = useComputed(() => source.value * 10);
+        captured = instance;
+        useSignalValue(instance);
+        return <div>{instance.value}</div>;
+      };
+
+      const { unmount } = render(<TestComponent />);
+      expect(captured!.value).toBe(10);
+
+      unmount();
+      source.value = 2;
+
+      // Disposed computeds are frozen at their last value.
+      expect(captured!.value).toBe(10);
+    });
+
+    it('should dispose and recreate the computed when deps change', () => {
+      const source = signal(1);
+      const instances: Computed<number>[] = [];
+
+      const TestComponent = ({ factor }: { factor: number }) => {
+        const instance = useComputed(() => source.value * factor, [factor]);
+        instances.push(instance);
+        const value = useSignalValue(instance);
+        return <div data-testid="v">{value}</div>;
+      };
+
+      const { rerender } = render(<TestComponent factor={2} />);
+      expect(screen.getByTestId('v').textContent).toBe('2');
+
+      rerender(<TestComponent factor={3} />);
+      expect(screen.getByTestId('v').textContent).toBe('3');
+
+      const first = instances[0];
+      const last = instances[instances.length - 1];
+      expect(first).not.toBe(last);
+
+      source.value = 2;
+
+      // The old instance was disposed by the deps change.
+      expect(first.value).toBe(2);
+      expect(last.value).toBe(6);
+    });
+  });
+
+  describe('useSignalEffect()', () => {
+    it('should run the effect and react to signal changes', () => {
+      const count = signal(0);
+      const spy = vi.fn();
+
+      const TestComponent = () => {
+        useSignalEffect(() => {
+          spy(count.value);
+        });
+        return <div />;
+      };
+
+      render(<TestComponent />);
+      expect(spy).toHaveBeenCalledTimes(1);
+      expect(spy).toHaveBeenLastCalledWith(0);
+
+      act(() => { count.value = 1; });
+      expect(spy).toHaveBeenCalledTimes(2);
+      expect(spy).toHaveBeenLastCalledWith(1);
+    });
+
+    it('should run cleanup before a re-run and on unmount', () => {
+      const count = signal(0);
+      const cleanup = vi.fn();
+
+      const TestComponent = () => {
+        useSignalEffect(() => {
+          count.value;
+          return cleanup;
+        });
+        return <div />;
+      };
+
+      const { unmount } = render(<TestComponent />);
+      expect(cleanup).toHaveBeenCalledTimes(0);
+
+      act(() => { count.value = 1; });
+      expect(cleanup).toHaveBeenCalledTimes(1);
+
+      unmount();
+      expect(cleanup).toHaveBeenCalledTimes(2);
+
+      act(() => { count.value = 2; });
+      expect(cleanup).toHaveBeenCalledTimes(2);
+    });
+
+    it('should recreate the effect when deps change', () => {
+      const count = signal(0);
+      const spy = vi.fn();
+
+      const TestComponent = ({ id }: { id: number }) => {
+        useSignalEffect(() => {
+          spy(id, count.value);
+        }, [id]);
+        return <div />;
+      };
+
+      const { rerender } = render(<TestComponent id={1} />);
+      expect(spy).toHaveBeenCalledTimes(1);
+
+      rerender(<TestComponent id={2} />);
+      // Cleanup of the old effect + initial run of the new one.
+      expect(spy).toHaveBeenCalledTimes(2);
+      expect(spy).toHaveBeenLastCalledWith(2, 0);
+
+      act(() => { count.value = 5; });
+      expect(spy).toHaveBeenCalledTimes(3);
+      expect(spy).toHaveBeenLastCalledWith(2, 5);
     });
   });
 });

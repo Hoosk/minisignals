@@ -51,3 +51,16 @@ jobs:
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish Vue Adapter
+        working-directory: ./packages/vue
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          PACKAGE=$(node -p "require('./package.json').name")
+          if npm view "${PACKAGE}@${VERSION}" version 2>/dev/null | grep -q "${VERSION}"; then
+            echo "${PACKAGE}@${VERSION} already published, skipping"
+          else
+            npm publish --access public
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
